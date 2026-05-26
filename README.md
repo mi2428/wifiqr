@@ -3,6 +3,8 @@
 A Rust CLI that generates Wi-Fi QR codes as PNG, SVG, or terminal text art
 from Wi-Fi credentials or arbitrary QR payload text.
 
+[![](https://github.com/mi2428/wifiqr/blob/main/screenshot.png?raw=true)](https://github.com/mi2428/wifiqr/blob/main/screenshot.png)
+
 ## Installation
 
 Install Rust and Cargo first, then build and install the binary with `make install`.
