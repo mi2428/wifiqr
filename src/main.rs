@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+mod version;
+
 use anyhow::{Context, Result, bail};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use image::{Rgb, RgbImage};
@@ -17,6 +19,8 @@ const MIN_ASCII_CELL_WIDTH: usize = 2;
 #[command(
     name = "wifiqr",
     version,
+    long_version = version::LONG_VERSION,
+    propagate_version = true,
     about = "Generate Wi-Fi QR codes as PNG, SVG, or terminal text art."
 )]
 struct Cli {
@@ -538,6 +542,38 @@ mod tests {
             .to_string();
 
         assert_eq!(error, "--ascii-char must not contain control characters");
+    }
+
+    #[test]
+    fn version_flags_split_short_and_long_output() {
+        let short = Cli::try_parse_from(["wifiqr", "-V"]).unwrap_err();
+        let long = Cli::try_parse_from(["wifiqr", "--version"]).unwrap_err();
+
+        assert_eq!(short.kind(), clap::error::ErrorKind::DisplayVersion);
+        assert_eq!(long.kind(), clap::error::ErrorKind::DisplayVersion);
+        assert_eq!(
+            short.to_string(),
+            format!("wifiqr {}\n", env!("CARGO_PKG_VERSION"))
+        );
+
+        let long = long.to_string();
+        assert!(long.starts_with(&format!("wifiqr {} (git ", env!("CARGO_PKG_VERSION"))));
+        assert!(long.contains("; commit "));
+        assert!(long.contains("; commit date "));
+        assert!(long.contains("; built "));
+        assert!(long.contains(") on "));
+        assert_ne!(long, short.to_string());
+    }
+
+    #[test]
+    fn version_flags_propagate_to_subcommands() {
+        let short = Cli::try_parse_from(["wifiqr", "raw", "-V"]).unwrap_err();
+
+        assert_eq!(short.kind(), clap::error::ErrorKind::DisplayVersion);
+        assert_eq!(
+            short.to_string(),
+            format!("wifiqr-raw {}\n", env!("CARGO_PKG_VERSION"))
+        );
     }
 
     fn sample_matrix() -> QrMatrix {

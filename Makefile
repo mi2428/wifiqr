@@ -8,7 +8,13 @@ CARGO            ?= $(shell if command -v $(RUSTUP) >/dev/null 2>&1 && $(RUSTUP)
 RUSTC            ?= $(shell if command -v $(RUSTUP) >/dev/null 2>&1 && $(RUSTUP) which rustc --toolchain $(RUSTUP_TOOLCHAIN) >/dev/null 2>&1; then $(RUSTUP) which rustc --toolchain $(RUSTUP_TOOLCHAIN); else command -v rustc; fi)
 RUSTDOC          ?= $(shell if command -v $(RUSTUP) >/dev/null 2>&1 && $(RUSTUP) which rustdoc --toolchain $(RUSTUP_TOOLCHAIN) >/dev/null 2>&1; then $(RUSTUP) which rustdoc --toolchain $(RUSTUP_TOOLCHAIN); else command -v rustdoc; fi)
 RUST_BINDIR      := $(patsubst %/,%,$(dir $(CARGO)))
-CARGO_ENV        := PATH="$(RUST_BINDIR):$(PATH)" RUSTC="$(RUSTC)" RUSTDOC="$(RUSTDOC)"
+BUILD_DATE_DEFAULT := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+BUILD_DATE       ?= $(BUILD_DATE_DEFAULT)
+GIT_DESCRIBE     ?= $(shell git describe --tags --always --dirty=-dirty 2>/dev/null || printf unknown)
+GIT_COMMIT       ?= $(shell git rev-parse HEAD 2>/dev/null || printf unknown)
+GIT_COMMIT_DATE  ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || printf unknown)
+BUILD_METADATA_ENV := WIFIQR_BUILD_DATE="$(BUILD_DATE)" WIFIQR_GIT_DESCRIBE="$(GIT_DESCRIBE)" WIFIQR_GIT_COMMIT="$(GIT_COMMIT)" WIFIQR_GIT_COMMIT_DATE="$(GIT_COMMIT_DATE)"
+CARGO_ENV        := PATH="$(RUST_BINDIR):$(PATH)" RUSTC="$(RUSTC)" RUSTDOC="$(RUSTDOC)" $(BUILD_METADATA_ENV)
 RELEASE_MAKE     ?= $(MAKE)
 
 INSTALL    ?= install
@@ -340,6 +346,10 @@ _dist.linux.$(1): _docker-check
 		-e HOME=/workspace/.home-linux/$(LINUX_CACHE_KEY)/$(1) \
 		-e CARGO_HOME=/workspace/.cargo-linux/$(1) \
 		-e CARGO_TARGET_DIR=/workspace/target/linux-$(1)-$(LINUX_CACHE_KEY) \
+		-e WIFIQR_BUILD_DATE="$(BUILD_DATE)" \
+		-e WIFIQR_GIT_DESCRIBE="$(GIT_DESCRIBE)" \
+		-e WIFIQR_GIT_COMMIT="$(GIT_COMMIT)" \
+		-e WIFIQR_GIT_COMMIT_DATE="$(GIT_COMMIT_DATE)" \
 		-v "$(CURDIR):/workspace" \
 		-w /workspace \
 		$(LINUX_BUILD_IMAGE) \

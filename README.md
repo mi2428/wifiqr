@@ -54,6 +54,8 @@ Options:
           Print version
 ```
 
+Use `-V` for the package version and `--version` for detailed build metadata.
+
 The default mode generates a Wi-Fi QR payload.
 When `--format` is omitted, the output format is inferred from the `--output` extension.
 Without `--output`, the QR code is printed as terminal text art.
